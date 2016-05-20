@@ -1,0 +1,96 @@
+component PP2 {
+	requires PushIF pushIF;
+	requires BucketIF bucketIF;
+	requires ConveyIF conveyIF;
+	requires LightIF lightIF1;
+	requires LightIF lightIF2;
+	
+	provides ButtonOn startPause;
+	provides ButtonAbort abort;
+	
+/*	behaviour
+	{
+		
+	*/
+}
+
+component Pusher {
+	provides PushIF pushIF;
+
+	
+	behaviour
+	{
+		enum States {Idle, Running};
+		States state = States.Idle;
+	
+		[state.Idle]{
+			on pushIF.startPush(): state = States.Running; // define startPush method
+			on pushIF.stopPush(): illegal;
+		}
+		
+		[state.Running] {
+			on pushIF.stopPush(): state = States.Idle;
+			on pushIF.startPush(): illegal;	
+		}	
+		
+	}
+}
+
+component BucketMech {
+	provides BucketIF bucketIF;
+	
+}
+
+component ConveyorB {
+	provides ConveyIF conveyIF; 
+	
+	behaviour
+	{
+		enum States {Idle, Running};
+		States state = States.Idle;
+	
+		[state.Idle]{
+			on conveyIF.startConveyor(): state = States.Running; // define startPush method
+			on conveyIF.stopConveyor(): illegal;
+		}
+		
+		[state.Running] {
+			on conveyIF.stopConveyor(): state = States.Idle;
+			on conveyIF.startConveyor(): illegal;	
+		}	
+		
+	}
+}
+
+component LightTr {
+	provides LightIF lightIF;
+}
+
+
+interface PushIF {
+	
+	in void startPush();
+	in void stopPush();
+}
+
+interface BucketIF {
+	
+}
+
+interface ConveyIF {
+	
+	in void startConveyor();
+	in void stopConveyor();	
+}
+
+interface LightIF{
+	
+}
+
+interface ButtonOn {
+	
+}
+
+interface ButtonAbort {
+	
+}
