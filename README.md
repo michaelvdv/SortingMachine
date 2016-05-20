@@ -1,2 +1,2 @@
-# SortingMachine
+# BucketSort
 A sorting machine
