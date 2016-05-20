@@ -1,12 +1,12 @@
 component PP2 {
 	requires PushIF pushIF;
-	requires BucketIF bucketIF;
 	requires ConveyIF conveyIF;
 	requires LightIF lightIF1;
 	requires LightIF lightIF2;
+	requires BucketIF bucketIF;
 	
-	provides ButtonOn startPause;
-	provides ButtonAbort abort;
+	provides Button startpause;
+	provides Button abort;
 	
 /*	behaviour
 	{
@@ -38,6 +38,63 @@ component Pusher {
 
 component BucketMech {
 	provides BucketIF bucketIF;
+	
+	behaviour {
+		enum States {Idle, IdleB, IdleW, RunningB, RunningW, ResetB, ResetW};
+		States state = States.Idle;
+		
+		[state.Idle]{
+			on bucketIF.startB():{
+				
+				state = States.RunningB;
+			} 
+			on bucketIF.startW(): state = States.RunningW;
+			on bucketIF.reset(): illegal;
+			on bucketIF.stop(): illegal;
+		}
+		
+		[state.IdleB]{
+			on bucketIF.startB(): illegal;
+			on bucketIF.startW(): illegal;
+			on bucketIF.reset(): state = States.ResetB;
+			on bucketIf.stop(): illegal;
+		}
+		
+		[state.IdleW]{
+			on bucketIF.startB(): illegal;
+			on bucketIF.startW(): illegal;
+			on bucketIF.reset(): state = States.ResetW;
+			on bucketIf.stop(): illegal;
+		}
+		
+		[state.RunningB]{
+			on bucketIF.startB(): illegal;
+			on bucketIF.startW(): illegal;
+			on bucketIF.reset(): illegal;
+			on bucketIF.stop(): state = States.IdleB;
+		}
+		
+		[state.RunningW]{
+			on bucketIF.startB(): illegal;
+			on bucketIF.startW(): illegal;
+			on bucketIF.reset(): illegal;
+			on bucketIF.stop(): state = States.IdleW;
+		}
+		
+		[state.ResetB]{
+			on bucketIF.startB(): illegal;
+			on bucketIF.startW(): illegal;
+			on bucketIF.reset(): illegal;
+			on bucketIf.stop(): state = States.Idle;
+		}
+		
+		[state.ResetW]{
+			on bucketIF.startB(): illegal;
+			on bucketIF.startW(): illegal;
+			on bucketIF.reset(): illegal;
+			on bucketIf.stop(): state = States.Idle;
+		}
+	}
 	
 }
 
@@ -87,10 +144,6 @@ interface LightIF{
 	
 }
 
-interface ButtonOn {
-	
-}
-
-interface ButtonAbort {
+interface Button {
 	
 }
