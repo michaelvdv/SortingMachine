@@ -1,149 +1,223 @@
-component PP2 {
-	requires PushIF pushIF;
-	requires ConveyIF conveyIF;
-	requires LightIF lightIF1;
-	requires LightIF lightIF2;
-	requires BucketIF bucketIF;
+interface PP2IF
+{
+	in void startUp();
+	in void startStop();
+	in void abort();
 	
-	provides Button startpause;
-	provides Button abort;
-	
-/*	behaviour
-	{
-		
-	*/
-}
-
-component Pusher {
-	provides PushIF pushIF;
-
+	out void error00();		//Pusher Disconnected
+	out void error01();		//Disc stuck at tube
+	out void error02();		//LED01 Broken
+	out void error03();		//Photocell 1 malfunction
+	out void error04();		//Conveyor Belt Disconnected
+	out void error05();		//Disc stuck in front of Photocell 1
+	out void error06();		//Bucket Mechanism Malfunction
+	out void pause();		
+	out void unpause();
+	out void aborted();
+	out void finished();
 	
 	behaviour
 	{
-		enum States {Idle, Running};
-		States state = States.Idle;
-	
-		[state.Idle]{
-			on pushIF.startPush(): state = States.Running; // define startPush method
-			on pushIF.stopPush(): illegal;
+		enum State {Off, Idle, ToIdle, Push, Scan, MoveWhite, MoveBlack, Aborted};
+		State state = State.Off;
+		
+		[state.ToIdle]{
+			on optional:		state = State.Idle;
 		}
 		
-		[state.Running] {
-			on pushIF.stopPush(): state = States.Idle;
-			on pushIF.startPush(): illegal;	
+		[state.Idle]{
+			on optional:		state = State.Scan;
+			on optional:		state = State.Push;
+		}
+		
+		[State.Push]{
+			on optional: 		state = State.Idle;
+			on optional: 		state = State.Scan;
+		}
+		
+		[State.Scan]{
+			on optional:		state = State.MoveWhite;
+			on optional:		state = State.MoveBlack;
+		}
+		
+		[state.MoveWhite]{
+			on optional:		state = State.Idle;
+		}
+		
+		[state.MoveBlack]{
+			on optional:		state = State.Idle;
+		}		
+		
+		on startUp:{
+			[state.Off]			state = State.ToIdle;
+			[otherwise]			illegal;
+		}		
+		
+		on startStop:
+		{
+			[state.Idle]		{}
+			[state.Scan]		{}
+			[state.Push]		{}
+			[state.ToIdle]		{}
+			[state.MoveWhite]	{}
+			[state.MoveBlack]	{}
+			[state.Aborted]		{state = State.ToIdle;}
+			[otherwise]			illegal;
+		}
+		on abort:
+		{
+			[state.Off]			illegal;
+			[state.Aborted]		{}
+			[otherwise]			{state = State.Aborted;}
 		}	
 		
 	}
+	
 }
 
-component BucketMech {
-	provides BucketIF bucketIF;
+interface SensorIF
+{
+	in void enable();
+	in void disable();
+	
+	out void triggered();
+	
+	behaviour
+	{
+		enum State { Disabled, Enabled, Triggered };
+		State state = State.Disabled;
+		
+		[state.Disabled]
+		{
+			on enable:			state = State.Enabled;
+			on disable:			{}
+		}
+		[state.Enabled]
+		{
+			on enable:			illegal;
+			on disable:			state = State.Disabled;
+			on optional:		{triggered; state = State.Triggered;}
+		}
+		[state.Triggered]
+		{
+			on enable:			illegal;
+			on disable:			state = State.Disabled;
+		}
+	}
+}
+
+interface ColourDetIF
+{
+	in void enable();
+	in void disable();
+	
+	out void white();
+	out void black();
+	
+	behaviour
+	{
+		enum State { Disabled, Enabled, Triggered };
+		State state = State.Disabled;
+		
+		[state.Disabled]
+		{
+			on enable:			state = State.Enabled;
+			on disable:			{}
+		}
+		[state.Enabled]
+		{
+			on enable:			illegal;
+			on disable:			state = State.Disabled;
+			on optional:		{black;state = State.Triggered;}
+			on optional:		{white;state = State.Triggered;}
+		}
+		[state.Triggered]
+		{
+			on enable:			illegal;
+			on disable:			{state = State.Disabled;}
+		}
+	}
+}
+
+interface MotorIF
+{
+	in void turnCW();
+	in void turnCCW();
+	in void disable();
+	
+	out void turningCW();
+	out void turningCCW();
+	out void disabled();
+	
+	behaviour
+	{
+		enum State { Disabled, TurnCW, TurnCCW, Disabling};
+		State state = State.Disabled;
+		
+		on turnCW:
+		{
+			[state.Disabled]	{turningCW;state = State.TurnCW;}
+			[otherwise]			{illegal;}
+		}
+		on turnCCW:
+		{
+			[state.Disabled]	{turningCCW;state = State.TurnCCW;}
+			[otherwise]			{illegal;}
+		}
+		on disable:
+		{
+			[state.TurnCW]		{disabled;state = State.Disabled;}
+			[state.TurnCCW]		{disabled;state = State.Disabled;}
+			[otherwise]			{}
+		}
+	}
+}
+
+interface ButtonIF {
+	
+	in void pressed();
+	in void notPressed();
+	
+	out void pressing();
+	out void notPressing();
 	
 	behaviour {
-		enum States {Idle, IdleB, IdleW, RunningB, RunningW, ResetB, ResetW};
-		States state = States.Idle;
-		
-		[state.Idle]{
-			on bucketIF.startB():{
 				
-				state = States.RunningB;
-			} 
-			on bucketIF.startW(): state = States.RunningW;
-			on bucketIF.reset(): illegal;
-			on bucketIF.stop(): illegal;
+		enum State {Pressed, NotPressed};
+		State state = State.NotPressed;
+		
+		on pressed:
+		{
+			[State.NotPressed]	{pressing;state = State.Pressed;}
+			[State.Pressed]		{}
+			[otherwise]			{illegal;}
 		}
 		
-		[state.IdleB]{
-			on bucketIF.startB(): illegal;
-			on bucketIF.startW(): illegal;
-			on bucketIF.reset(): state = States.ResetB;
-			on bucketIf.stop(): illegal;
+		on notPressed:
+		{
+			[State.Pressed]		{notPressing; state = State.NotPressed;}
+			[otherwise]			{}
 		}
+	}	
+}
+
+component BucketSort
+{
+	provides PP2IF pp2;
+	requires SensorIF sensor1;
+	requires SensorIF sensor2;
+	requires ColourDetIF colourDet1;
+	requires ColourDetIF colourDet2;
+	requires MotorIF motorPush;
+	requires MotorIF motorConveyor;
+	requires MotorIF motorBucket;
+	requires ButtonIF buttonPush;
+	requires ButtonIF buttonBucket;
+	
+	behaviour {
 		
-		[state.IdleW]{
-			on bucketIF.startB(): illegal;
-			on bucketIF.startW(): illegal;
-			on bucketIF.reset(): state = States.ResetW;
-			on bucketIf.stop(): illegal;
-		}
 		
-		[state.RunningB]{
-			on bucketIF.startB(): illegal;
-			on bucketIF.startW(): illegal;
-			on bucketIF.reset(): illegal;
-			on bucketIF.stop(): state = States.IdleB;
-		}
-		
-		[state.RunningW]{
-			on bucketIF.startB(): illegal;
-			on bucketIF.startW(): illegal;
-			on bucketIF.reset(): illegal;
-			on bucketIF.stop(): state = States.IdleW;
-		}
-		
-		[state.ResetB]{
-			on bucketIF.startB(): illegal;
-			on bucketIF.startW(): illegal;
-			on bucketIF.reset(): illegal;
-			on bucketIf.stop(): state = States.Idle;
-		}
-		
-		[state.ResetW]{
-			on bucketIF.startB(): illegal;
-			on bucketIF.startW(): illegal;
-			on bucketIF.reset(): illegal;
-			on bucketIf.stop(): state = States.Idle;
-		}
 	}
 	
-}
-
-component ConveyorB {
-	provides ConveyIF conveyIF; 
-	
-	behaviour
-	{
-		enum States {Idle, Running};
-		States state = States.Idle;
-	
-		[state.Idle]{
-			on conveyIF.startConveyor(): state = States.Running; // define startPush method
-			on conveyIF.stopConveyor(): illegal;
-		}
-		
-		[state.Running] {
-			on conveyIF.stopConveyor(): state = States.Idle;
-			on conveyIF.startConveyor(): illegal;	
-		}	
-		
-	}
-}
-
-component LightTr {
-	provides LightIF lightIF;
-}
-
-
-interface PushIF {
-	
-	in void startPush();
-	in void stopPush();
-}
-
-interface BucketIF {
-	
-}
-
-interface ConveyIF {
-	
-	in void startConveyor();
-	in void stopConveyor();	
-}
-
-interface LightIF{
-	
-}
-
-interface Button {
 	
 }
