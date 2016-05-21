@@ -30,12 +30,12 @@ interface PP2IF
 			on optional:		state = State.Push;
 		}
 		
-		[State.Push]{
+		[state.Push]{
 			on optional: 		state = State.Idle;
 			on optional: 		state = State.Scan;
 		}
 		
-		[State.Scan]{
+		[state.Scan]{
 			on optional:		state = State.MoveWhite;
 			on optional:		state = State.MoveBlack;
 		}
@@ -188,14 +188,14 @@ interface ButtonIF {
 		
 		on pressed:
 		{
-			[State.NotPressed]	{pressing;state = State.Pressed;}
-			[State.Pressed]		{}
+			[state.NotPressed]	{pressing; state = State.Pressed;}
+			[state.Pressed]		{}
 			[otherwise]			{illegal;}
 		}
 		
 		on notPressed:
 		{
-			[State.Pressed]		{notPressing; state = State.NotPressed;}
+			[state.Pressed]		{notPressing; state = State.NotPressed;}
 			[otherwise]			{}
 		}
 	}	
