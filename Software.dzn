@@ -11,7 +11,7 @@ interface PP2IF
 	out void error04();		//LED02 malfunction
 	out void error05();		//Photocell 1 malfunction
 	out void error06();		//Conveyor Belt Disconnected
-	out void error07();		//Disc stuck in front of Photocell 1
+	out void error07();		//Disc stuck in front of Photocell 1 or 2
 	out void error08();		//Bucket Mechanism Malfunction
 	out void error09();		//BucketBtn Disconnected
 	out void pause();		
@@ -267,12 +267,12 @@ component BucketSort
 			on colourDet2.timeout():		illegal;
 			on motorPush.turningCW():		illegal;
 			on motorPush.turningCCW():		illegal;
-			on motorPush.disabled():		illegal;
+			on motorPush.disabled():		{}
 			on motorConveyor.turningCW():	illegal;
-			on motorConveyor.disabled():	illegal;
+			on motorConveyor.disabled():	{}
 			on motorBucket.turningCW():		illegal;
 			on motorBucket.turningCCW():	illegal;
-			on motorBucket.disabled():		illegal;
+			on motorBucket.disabled():		{}
 			on buttonPush.pressing():		illegal;
 			on buttonPush.notPressing():	illegal;
 			on buttonPush.timeoutP():		illegal;
@@ -308,13 +308,13 @@ component BucketSort
 			on colourDet2.timeout():		illegal;
 			on motorPush.turningCW():		illegal;
 			on motorPush.turningCCW():		illegal;
-			on motorPush.disabled():		illegal;
+			on motorPush.disabled():		{}
 			on motorConveyor.turningCW():	illegal;
 			on motorConveyor.turningCCW():	illegal;
-			on motorConveyor.disabled():	illegal;
+			on motorConveyor.disabled():	{}
 			on motorBucket.turningCW():		illegal;
 			on motorBucket.turningCCW():	illegal;
-			on motorBucket.disabled():		illegal;
+			on motorBucket.disabled():		{}
 			on buttonPush.pressing():		illegal;
 			on buttonPush.notPressing():	illegal;
 			on buttonPush.timeoutP():		illegal;
@@ -348,7 +348,7 @@ component BucketSort
 			on motorConveyor.disabled():	illegal;
 			on motorBucket.turningCW():		illegal;
 			on motorBucket.turningCCW():	illegal;
-			on motorBucket.disabled():		illegal;
+			on motorBucket.disabled():		{}
 			on buttonPush.pressing():		{state = State.PushingButtonPressed;}
 			on buttonPush.notPressing():	{}
 			on buttonPush.timeoutP():		illegal;
@@ -382,7 +382,7 @@ component BucketSort
 			on motorConveyor.disabled():	illegal;
 			on motorBucket.turningCW():		illegal;
 			on motorBucket.turningCCW():	illegal;
-			on motorBucket.disabled():		illegal;
+			on motorBucket.disabled():		{}
 			on buttonPush.pressing():		{}
 			on buttonPush.notPressing():	{colourDet1.enable(); colourDet2.enable(); motorPush.disable(); motorConveyor.turnCW(); buttonPush.disable(); state = State.Scanning1;}
 			on buttonPush.timeoutP():		{pp2.error00(); sensor1.disable(); sensor2.disable(); buttonPush.disable(); motorPush.disable(); state = State.Aborted;}
@@ -404,9 +404,11 @@ component BucketSort
 			on sensor2.systemCheckDone():	{}
 			on colourDet1.white():			{motorBucket.turnCW(); buttonBucket.enable(); colourDet1.disable(); sensor1.disable(); state = State.MoveWhite;}
 			on colourDet1.black():			{motorBucket.turnCCW(); buttonBucket.enable(); colourDet1.disable(); sensor1.disable(); state = State.MoveBlack;}
-			on colourDet1.timeout():		{pp2.error05(); sensor1.disable(); sensor2.disable(); colourDet1.disable(); colourDet2.disable(); motorConveyor.disable(); state = State.Aborted;}
+			//For the JAVA code: the scanning of the black disk is of course done by a timer instead of a signal.
+			on colourDet1.timeout():		{pp2.error07(); sensor1.disable(); sensor2.disable(); colourDet1.disable(); colourDet2.disable(); motorConveyor.disable(); state = State.Aborted;}
 			on colourDet2.white():			{}
 			on colourDet2.black():			{}
+			//See above comment
 			on colourDet2.timeout():		{}
 			on motorPush.turningCW():		illegal;
 			on motorPush.turningCCW():		illegal;
@@ -416,7 +418,7 @@ component BucketSort
 			on motorConveyor.disabled():	illegal;
 			on motorBucket.turningCW():		illegal;
 			on motorBucket.turningCCW():	illegal;
-			on motorBucket.disabled():		illegal;
+			on motorBucket.disabled():		{}
 			on buttonPush.pressing():		illegal;
 			on buttonPush.notPressing():	illegal;
 			on buttonPush.timeoutP():		illegal;
@@ -431,17 +433,17 @@ component BucketSort
 			on pp2.startUp():				illegal;				
 			on pp2.startStop():				paused = true;
 			on sensor1.triggered():			{}
-			on sensor1.timeout():			{pp2.error00(); motorBucket.disable();buttonBucket.disable(); motorConveyor.disable();sensor2.disable(); colourDet2.disable(); state = State.Aborted;}
+			on sensor1.timeout():			{pp2.error00(); sensor2.disable(); colourDet2.disable(); motorConveyor.disable(); motorBucket.disable(); buttonBucket.disable(); state = State.Aborted;}
 			on sensor1.systemCheckDone():	{}
 			on sensor2.triggered():			{}
-			on sensor2.timeout():			{pp2.error06(); motorBucket.disable();buttonBucket.disable(); motorConveyor.disable();sensor2.disable(); colourDet2.disable();state = State.Aborted;}
+			on sensor2.timeout():			{pp2.error06(); sensor2.disable(); colourDet2.disable(); motorConveyor.disable(); motorBucket.disable(); buttonBucket.disable(); state = State.Aborted;}
 			on sensor2.systemCheckDone():	{}
 			on colourDet1.white():			{}
 			on colourDet1.black():			{}
-			on colourDet1.timeout():		{pp2.error05();motorBucket.disable();buttonBucket.disable(); motorConveyor.disable();sensor2.disable(); colourDet2.disable(); state = State.Aborted;}
-			on colourDet2.white():			{}
-			on colourDet2.black():			{}
-			on colourDet2.timeout():		{}
+			on colourDet1.timeout():		{pp2.error07(); sensor2.disable(); colourDet2.disable(); motorConveyor.disable(); motorBucket.disable(); buttonBucket.disable(); state = State.Aborted;}
+			on colourDet2.white():			{}													//This is the confirmation of the disk colour.
+			on colourDet2.black():			{pp2.error05(); sensor2.disable(); colourDet2.disable(); motorConveyor.disable(); motorBucket.disable(); buttonBucket.disable(); state = State.Aborted;}
+			on colourDet2.timeout():		{pp2.error07(); sensor2.disable(); colourDet2.disable(); motorConveyor.disable(); motorBucket.disable(); buttonBucket.disable(); state = State.Aborted;}
 			on motorPush.turningCW():		illegal;
 			on motorPush.turningCCW():		illegal;
 			on motorPush.disabled():		illegal;
@@ -456,30 +458,33 @@ component BucketSort
 			on buttonPush.timeoutP():		illegal;
 			on buttonPush.timeoutNP():		illegal;
 			on buttonBucket.pressing():		{sensor2.disable(); colourDet2.disable(); motorBucket.disable(); state = State.IdleWhite;}
-			on buttonBucket.notPressing():	illegal;	
-			on buttonBucket.timeoutP():		illegal;
-			on buttonBucket.timeoutNP():	{}
+			on buttonBucket.notPressing():	{}	
+			on buttonBucket.timeoutP():		{}
+			on buttonBucket.timeoutNP():	{pp2.error08(); sensor2.disable(); colourDet2.disable(); motorConveyor.disable(); motorBucket.disable(); buttonBucket.disable();  state = State.Aborted;}			
+			//or error09? How do we see the difference between the two?
+			//Saying the bucket mechanism is failing so far is best, since we do not know more.
 		}	
 		
 		[state.MoveBlack] {
 			on pp2.startUp():				illegal;				
 			on pp2.startStop():				paused = true;
 			on sensor1.triggered():			illegal;
-			on sensor1.timeout():			{pp2.error00(); motorBucket.disable();buttonBucket.disable(); motorConveyor.disable();sensor2.disable(); colourDet2.disable(); state = State.Aborted;}
+			on sensor1.timeout():			{pp2.error00(); sensor2.disable(); colourDet2.disable(); motorConveyor.disable(); motorBucket.disable(); buttonBucket.disable(); state = State.Aborted;}
 			on sensor1.systemCheckDone():	{}
-			on sensor2.triggered():			{pp2.error05(); motorBucket.disable();buttonBucket.disable(); motorConveyor.disable();sensor2.disable(); colourDet2.disable();  state = State.Aborted;}
-			on sensor2.timeout():			{pp2.error06(); motorBucket.disable();buttonBucket.disable(); motorConveyor.disable();sensor2.disable(); colourDet2.disable();  state = State.Aborted;}
+			on sensor2.triggered():			{}
+			on sensor2.timeout():			{pp2.error06(); sensor2.disable(); colourDet2.disable(); motorConveyor.disable(); motorBucket.disable(); buttonBucket.disable(); state = State.Aborted;}
 			on sensor2.systemCheckDone():	{}
 			on colourDet1.white():			{}
 			on colourDet1.black():			{}
-			on colourDet1.timeout():		{pp2.error05(); motorBucket.disable();buttonBucket.disable(); motorConveyor.disable();sensor2.disable(); colourDet2.disable(); state = State.Aborted;}
-			on colourDet2.white():			{pp2.error05(); motorBucket.disable();buttonBucket.disable(); motorConveyor.disable();sensor2.disable(); colourDet2.disable(); state = State.Aborted;}
+			on colourDet1.timeout():		{pp2.error07(); sensor2.disable(); colourDet2.disable(); motorConveyor.disable(); motorBucket.disable(); buttonBucket.disable(); state = State.Aborted;}
+			on colourDet2.white():			{pp2.error05(); sensor2.disable(); colourDet2.disable(); motorConveyor.disable(); motorBucket.disable(); buttonBucket.disable(); state = State.Aborted;}
 			on colourDet2.black():			{}
-			on colourDet2.timeout():		{}
-			on motorPush.turningCW():		{}
+			on colourDet2.timeout():		{pp2.error07(); sensor2.disable(); colourDet2.disable(); motorConveyor.disable(); motorBucket.disable(); buttonBucket.disable(); state = State.Aborted;}
+			on motorPush.turningCW():		illegal;
 			on motorPush.turningCCW():		illegal;
 			on motorPush.disabled():		illegal;
 			on motorConveyor.turningCW():	{}
+			on motorConveyor.turningCCW():	illegal;
 			on motorConveyor.disabled():	illegal;
 			on motorBucket.turningCW():		illegal;
 			on motorBucket.turningCCW():	{}
@@ -488,10 +493,11 @@ component BucketSort
 			on buttonPush.notPressing():	illegal;
 			on buttonPush.timeoutP():		illegal;
 			on buttonPush.timeoutNP():		illegal;
-			on buttonBucket.pressing():		{sensor1.disable(); sensor2.disable(); colourDet2.disable(); motorBucket.disable(); state = State.IdleBlack;}
+			on buttonBucket.pressing():		{sensor2.disable(); colourDet2.disable(); motorBucket.disable(); state = State.IdleBlack;}
 			on buttonBucket.notPressing():	{}	
-			on buttonBucket.timeoutP():		illegal;
-			on buttonBucket.timeoutNP():	{}
+			on buttonBucket.timeoutP():		{}
+			on buttonBucket.timeoutNP():	{pp2.error08(); sensor2.disable(); colourDet2.disable(); motorConveyor.disable(); motorBucket.disable(); buttonBucket.disable(); state = State.Aborted;}		
+			//see comment in MoveWhite
 		}	
 		
 		[state.IdleWhite] {
@@ -509,7 +515,7 @@ component BucketSort
 			on colourDet2.white():			illegal;
 			on colourDet2.black():			illegal;
 			on colourDet2.timeout():		illegal;
-			on motorPush.turningCW():		{}
+			on motorPush.turningCW():		illegal;
 			on motorPush.turningCCW():		illegal;
 			on motorPush.disabled():		illegal;
 			on motorConveyor.turningCW():	{}
@@ -523,9 +529,9 @@ component BucketSort
 			on buttonPush.timeoutP():		illegal;
 			on buttonPush.timeoutNP():		illegal;
 			on buttonBucket.pressing():		{}
-			on buttonBucket.notPressing():	{}	
+			on buttonBucket.notPressing():	{pp2.error09(); motorBucket.disable(); motorConveyor.disable(); buttonBucket.disable(); state = State.Aborted;}	
 			on buttonBucket.timeoutP():		{motorBucket.turnCCW(); motorConveyor.disable(); state = State.MoveWhiteBack;}
-			on buttonBucket.timeoutNP():	{}
+			on buttonBucket.timeoutNP():	illegal;
 		}	
 		
 		[state.IdleBlack] {
@@ -548,18 +554,18 @@ component BucketSort
 			on motorPush.disabled():		illegal;
 			on motorConveyor.turningCW():	{}
 			on motorConveyor.turningCCW():	illegal;
-			on motorConveyor.disabled():	illegal;
+			on motorConveyor.disabled():	{}
 			on motorBucket.turningCW():		illegal;
-			on motorBucket.turningCCW():	{}
+			on motorBucket.turningCCW():	illegal;
 			on motorBucket.disabled():		{}
 			on buttonPush.pressing():		illegal;
 			on buttonPush.notPressing():	{}
 			on buttonPush.timeoutP():		illegal;
 			on buttonPush.timeoutNP():		illegal;
 			on buttonBucket.pressing():		{}
-			on buttonBucket.notPressing():	{}	
+			on buttonBucket.notPressing():	{pp2.error09(); motorBucket.disable(); motorConveyor.disable(); buttonBucket.disable(); state = State.Aborted;}	
 			on buttonBucket.timeoutP():		{motorBucket.turnCW(); motorConveyor.disable(); state = State.MoveBlackBack;}
-			on buttonBucket.timeoutNP():	{}
+			on buttonBucket.timeoutNP():	illegal;
 		}	
 		
 		[state.MoveWhiteBack] {
@@ -580,19 +586,20 @@ component BucketSort
 			on motorPush.turningCW():		illegal;
 			on motorPush.turningCCW():		illegal;
 			on motorPush.disabled():		illegal;
-			on motorConveyor.turningCW():	{}
+			on motorConveyor.turningCW():	illegal;
+			on motorConveyor.turningCCW():	illegal;
 			on motorConveyor.disabled():	{}
-			on motorBucket.turningCW():		illegal;
-			on motorBucket.turningCCW():	{}
+			on motorBucket.turningCW():		{}
+			on motorBucket.turningCCW():	{pp2.error08(); motorBucket.disable(); buttonBucket.disable(); state = State.Aborted;}
 			on motorBucket.disabled():		illegal;
 			on buttonPush.pressing():		illegal;
 			on buttonPush.notPressing():	{}
 			on buttonPush.timeoutP():		illegal;
 			on buttonPush.timeoutNP():		illegal;
-			on buttonBucket.pressing():		illegal;
-			on buttonBucket.notPressing():	{motorPush.turnCW(); state = State.PushingButtonNotPressed;}	
-			on buttonBucket.timeoutP():		illegal;
-			on buttonBucket.timeoutNP():	illegal;
+			on buttonBucket.pressing():		{}
+			on buttonBucket.notPressing():	{motorBucket.disable(); motorPush.turnCW(); buttonBucket.disable(); state = State.PushingButtonNotPressed;}	
+			on buttonBucket.timeoutP():		{pp2.error08(); motorBucket.disable(); buttonBucket.disable(); state = State.Aborted;}
+			on buttonBucket.timeoutNP():	{pp2.error09(); motorBucket.disable(); buttonBucket.disable(); state = State.Aborted;}
 		}	
 		
 		[state.MoveBlackBack] {
@@ -613,21 +620,23 @@ component BucketSort
 			on motorPush.turningCW():		illegal;
 			on motorPush.turningCCW():		illegal;
 			on motorPush.disabled():		illegal;
-			on motorConveyor.turningCW():	{}
+			on motorConveyor.turningCW():	illegal;
+			on motorConveyor.turningCCW():	illegal;
 			on motorConveyor.disabled():	{}
-			on motorBucket.turningCW():		illegal;
-			on motorBucket.turningCCW():	{}
+			on motorBucket.turningCW():		{}
+			on motorBucket.turningCCW():	{pp2.error08(); motorBucket.disable(); buttonBucket.disable(); state = State.Aborted;}
 			on motorBucket.disabled():		illegal;
 			on buttonPush.pressing():		illegal;
-			on buttonPush.notPressing():	{}
+			on buttonPush.notPressing():	illegal;
 			on buttonPush.timeoutP():		illegal;
 			on buttonPush.timeoutNP():		illegal;
-			on buttonBucket.pressing():		illegal;
-			on buttonBucket.notPressing():	{motorPush.turnCW(); state = State.PushingButtonNotPressed;}	
-			on buttonBucket.timeoutP():		illegal;
-			on buttonBucket.timeoutNP():	illegal;
+			on buttonBucket.pressing():		{}
+			on buttonBucket.notPressing():	{motorBucket.disable(); motorPush.turnCW(); buttonBucket.disable(); state = State.PushingButtonNotPressed;}	
+			on buttonBucket.timeoutP():		{pp2.error08(); motorBucket.disable(); buttonBucket.disable(); state = State.Aborted;}
+			on buttonBucket.timeoutNP():	{pp2.error09(); motorBucket.disable(); buttonBucket.disable(); state = State.Aborted;}
 		}	
 		
+		//This state is a variation of the off state. Here the system is still running and not disconnected. 
 		[state.Aborted] {
 			on pp2.startUp():				{}		
 			on pp2.startStop():				{sensor1.enable(); sensor2.enable();  state = State.SystemCheck;}
@@ -656,8 +665,8 @@ component BucketSort
 			on buttonPush.notPressing():	{}
 			on buttonPush.timeoutP():		{}
 			on buttonPush.timeoutNP():		{}
-			on buttonBucket.pressing():		illegal;
-			on buttonBucket.notPressing():	illegal;
+			on buttonBucket.pressing():		{}
+			on buttonBucket.notPressing():	{}
 			on buttonBucket.timeoutP():		{}
 			on buttonBucket.timeoutNP():	{}
 		}	
@@ -667,7 +676,7 @@ component BucketSort
 			[state.Off]					illegal;
 			[state.Aborted]				{}
 			[otherwise]					{sensor1.disable(); sensor2.disable(); 
-										colourDet1.disable(); colourDet2.disable(); buttonPush.disable();
+										colourDet1.disable(); colourDet2.disable(); buttonPush.disable(); buttonBucket.disable();
 										motorPush.disable(); motorConveyor.disable(); motorBucket.disable(); 
 										state = State.Aborted;
 			}
