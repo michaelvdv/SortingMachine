@@ -32,7 +32,7 @@ interface PP2IF
 		
 		on startUp:{
 			[state.Off]			{state = State.Idle;}
-			[otherwise]			illegal;
+			[otherwise]			{}
 		}		
 		
 		on startStop:
@@ -40,7 +40,7 @@ interface PP2IF
 			[state.Idle]		{state = State.Running;}
 			[state.Running]		{state = State.Idle;}
 			[state.Aborted]		{state = State.Idle;}
-			[otherwise]			illegal;
+			[otherwise]			{}
 		}
 		on abort:
 		{
@@ -80,7 +80,7 @@ interface SensorIF
 		}
 		[state.Triggered]		//Sensor output = 0!
 		{
-			on enable:			illegal;
+			on enable:			{}
 			on disable:			state = State.Disabled;
 			on inevitable:		timeout;
 		}
